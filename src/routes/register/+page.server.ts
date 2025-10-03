@@ -2,7 +2,7 @@ import { redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { createSession, validateSessionToken } from "$lib/server/auth";
 import sql from "$lib/server/db";
-import { verify } from "@node-rs/argon2";
+import { hash } from "@node-rs/argon2";
 
 export const load: PageServerLoad = async ({ cookies }) => {
     // If the user is already logged in, redirect them to the home page
@@ -15,12 +15,6 @@ export const load: PageServerLoad = async ({ cookies }) => {
             throw redirect(302, "/");
         }
     }
-
-    // TODO: Proper logging in, just creates a new session for now
-    // const session = await createSession();
-    // cookies.set("session", session.token, { path: "/" });
-
-    // throw redirect(302, "/");
 };
 
 export const actions: Actions = {
@@ -29,19 +23,24 @@ export const actions: Actions = {
 
         const username = data.get("username")!.toString();
         const password = data.get("password")!.toString();
+        const name = data.get("name")!.toString();
 
-        const user =
+        // Check if the username already exists
+        const existingUser =
             await sql`SELECT * FROM users WHERE username = ${username}`;
 
-        if (user.length != 1) {
-            return { error: "Invalid username or password" };
+        if (existingUser.length > 0) {
+            return { error: "Username is taken" };
         }
 
-        if (!(await verify(user[0].password, password))) {
-            return { error: "Invalid username or password" };
-        }
+        const hashedPassword = await hash(password);
 
-        const session = await createSession(user[0].id);
+        const result =
+            await sql`INSERT INTO users (username, password, name) VALUES (${username}, ${hashedPassword}, ${name}) RETURNING id`;
+
+        const userId = result[0]!.id;
+
+        const session = await createSession(userId);
         cookies.set("session", session.token, { path: "/" });
 
         throw redirect(302, "/");

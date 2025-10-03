@@ -4,6 +4,7 @@ import sql from "./db";
 interface Session {
     id: string;
     secretHash: Uint8Array;
+    userId: string;
     createdAt: Date;
 }
 
@@ -26,7 +27,7 @@ function generateSecureRandomString(): string {
     return id;
 }
 
-export function constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
+function constantTimeCompare(a: Uint8Array, b: Uint8Array): boolean {
     if (a.length !== b.length) return false;
 
     let diff = 0;
@@ -44,8 +45,8 @@ async function hashSecret(secret: string): Promise<Uint8Array> {
     return new Uint8Array(secretHashBuffer);
 }
 
-export async function createSession(): Promise<SessionWithToken> {
-    console.log("Creating session");
+export async function createSession(userId: string): Promise<SessionWithToken> {
+    console.log("Creating new session");
 
     const now = new Date();
 
@@ -55,17 +56,15 @@ export async function createSession(): Promise<SessionWithToken> {
 
     const token = `${id}.${secret}`;
 
-    console.log(`Token: ${token}`);
-    console.log(`Hashed: ${secretHash}`);
-
     const session: SessionWithToken = {
         id,
         secretHash,
+        userId,
         createdAt: now,
         token,
     };
 
-    await sql`INSERT INTO session (id, secret_hash, created_at) VALUES (${session.id}, ${session.secretHash}, ${session.createdAt})`;
+    await sql`INSERT INTO sessions VALUES (${session.id}, ${session.secretHash}, ${session.userId}, ${session.createdAt})`;
 
     return session;
 }
@@ -73,7 +72,7 @@ export async function createSession(): Promise<SessionWithToken> {
 async function getSession(sessionId: string): Promise<Session | null> {
     // TODO: Expire old sessions
 
-    const result = await sql`SELECT * FROM session WHERE id = ${sessionId}`;
+    const result = await sql`SELECT * FROM sessions WHERE id = ${sessionId}`;
 
     if (result.length !== 1) {
         return null;
@@ -82,12 +81,13 @@ async function getSession(sessionId: string): Promise<Session | null> {
     return {
         id: result[0].id,
         secretHash: result[0].secret_hash,
+        userId: result[0].user_id,
         createdAt: result[0].created_at,
     };
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-    await sql`DELETE FROM session WHERE id = ${sessionId}`;
+    await sql`DELETE FROM sessions WHERE id = ${sessionId}`;
 }
 
 export async function validateSessionToken(

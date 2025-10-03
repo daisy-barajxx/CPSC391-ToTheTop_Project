@@ -5,3 +5,5 @@
 </script>
 
 <h1>Stock {data.symbol}</h1>
+
+<p>Wait, why does the public page require an account?</p>
