@@ -1,19 +1,15 @@
 import { redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { createSession, validateSessionToken } from "$lib/server/auth";
+import { createSession, isValidSession } from "$lib/server/auth";
 import sql from "$lib/server/db";
 import { hash } from "@node-rs/argon2";
+import { usernameValid, passwordValid, nameValid } from "$lib/user.svelte";
+import { error } from "@sveltejs/kit";
 
 export const load: PageServerLoad = async ({ cookies }) => {
     // If the user is already logged in, redirect them to the home page
-    const sessionToken = cookies.get("session");
-
-    if (sessionToken) {
-        const existingSession = await validateSessionToken(sessionToken);
-
-        if (existingSession) {
-            throw redirect(302, "/");
-        }
+    if (await isValidSession(cookies)) {
+        throw redirect(302, "/");
     }
 };
 
@@ -21,16 +17,31 @@ export const actions: Actions = {
     default: async ({ cookies, request }) => {
         const data = await request.formData();
 
-        const username = data.get("username")!.toString();
-        const password = data.get("password")!.toString();
-        const name = data.get("name")!.toString();
+        const username = data.get("username")?.toString();
+        const password = data.get("password")?.toString();
+        const name = data.get("name")?.toString();
 
-        // Check if the username already exists
-        const existingUser =
+        if (!username || !password || !name) {
+            throw error(400, "All fields are required");
+        }
+
+        if (!usernameValid(username)) {
+            return { error: "Invalid username" };
+        }
+
+        if (!passwordValid(password)) {
+            return { error: "Invalid password" };
+        }
+
+        if (!nameValid(name)) {
+            return { error: "Invalid name" };
+        }
+
+        const existingUsers =
             await sql`SELECT * FROM users WHERE username = ${username}`;
 
-        if (existingUser.length > 0) {
-            return { error: "Username is taken" };
+        if (existingUsers.length > 0) {
+            return { error: "Username is already taken" };
         }
 
         const hashedPassword = await hash(password);
@@ -43,6 +54,6 @@ export const actions: Actions = {
         const session = await createSession(userId);
         cookies.set("session", session.token, { path: "/" });
 
-        throw redirect(302, "/");
+        return { user: { id: userId, name } };
     },
 };

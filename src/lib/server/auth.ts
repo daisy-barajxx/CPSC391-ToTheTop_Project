@@ -1,4 +1,5 @@
 // Much of the code below has been taken from https://lucia-auth.com
+import type { Cookies } from "@sveltejs/kit";
 import sql from "./db";
 
 interface Session {
@@ -11,6 +12,8 @@ interface Session {
 interface SessionWithToken extends Session {
     token: string;
 }
+
+export const SESSION_COOKIE_NAME = "sessionToken";
 
 function generateSecureRandomString(): string {
     // Alphabet without confusing/similar chars
@@ -107,4 +110,14 @@ export async function validateSessionToken(
     }
 
     return session;
+}
+
+export async function isValidSession(cookies: Cookies): Promise<boolean> {
+    const token = cookies.get(SESSION_COOKIE_NAME);
+
+    if (!token) {
+        return false;
+    }
+
+    return (await validateSessionToken(token)) != null;
 }

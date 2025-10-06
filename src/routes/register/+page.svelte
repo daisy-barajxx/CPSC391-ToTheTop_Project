@@ -1,7 +1,17 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { userState } from "$lib/user.svelte";
     import type { PageProps } from "./$types";
 
-    let { data, form }: PageProps = $props();
+    let { form }: PageProps = $props();
+
+    $effect(() => {
+        if (form?.user) {
+            userState.user = form.user;
+
+            goto("/");
+        }
+    });
 </script>
 
 <main>

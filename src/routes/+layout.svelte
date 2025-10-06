@@ -1,7 +1,16 @@
 <script lang="ts">
     import favicon from "$lib/assets/favicon.svg";
+    import { userState } from "$lib/user.svelte.js";
 
     let { data, children } = $props();
+
+    $effect(() => {
+        if (data?.user) {
+            userState.user = data.user;
+        }
+    });
+
+    $inspect(userState);
 </script>
 
 <svelte:head>
@@ -9,8 +18,8 @@
 </svelte:head>
 
 <nav>
-    {#if data?.user}
-        <span>Welcome, {data.user.name}</span>
+    {#if userState.user}
+        <span>Welcome, {userState.user.name}</span>
         <a href="/logout">Logout</a>
     {:else}
         <a href="/login">Login</a>

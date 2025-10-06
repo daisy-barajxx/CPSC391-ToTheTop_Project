@@ -1,49 +1,47 @@
 import { redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { createSession, validateSessionToken } from "$lib/server/auth";
+import {
+    createSession,
+    isValidSession,
+    SESSION_COOKIE_NAME,
+} from "$lib/server/auth";
 import sql from "$lib/server/db";
 import { verify } from "@node-rs/argon2";
+import { error } from "@sveltejs/kit";
 
 export const load: PageServerLoad = async ({ cookies }) => {
-    // If the user is already logged in, redirect them to the home page
-    const sessionToken = cookies.get("session");
-
-    if (sessionToken) {
-        const existingSession = await validateSessionToken(sessionToken);
-
-        if (existingSession) {
-            throw redirect(302, "/");
-        }
+    if (await isValidSession(cookies)) {
+        throw redirect(302, "/");
     }
-
-    // TODO: Proper logging in, just creates a new session for now
-    // const session = await createSession();
-    // cookies.set("session", session.token, { path: "/" });
-
-    // throw redirect(302, "/");
 };
 
 export const actions: Actions = {
     default: async ({ cookies, request }) => {
         const data = await request.formData();
 
-        const username = data.get("username")!.toString();
-        const password = data.get("password")!.toString();
+        const username = data.get("username")?.toString();
+        const password = data.get("password")?.toString();
 
-        const user =
+        if (!username || !password) {
+            throw error(400, "Username and password are required");
+        }
+
+        const users =
             await sql`SELECT * FROM users WHERE username = ${username}`;
 
-        if (user.length != 1) {
+        if (users.length !== 1) {
             return { error: "Invalid username or password" };
         }
 
-        if (!(await verify(user[0].password, password))) {
+        const user = users[0]!;
+
+        if (!(await verify(user.password, password))) {
             return { error: "Invalid username or password" };
         }
 
-        const session = await createSession(user[0].id);
-        cookies.set("session", session.token, { path: "/" });
+        const session = await createSession(user.id);
+        cookies.set(SESSION_COOKIE_NAME, session.token, { path: "/" });
 
-        throw redirect(302, "/");
+        return { user: { id: user.id, name: user.name } };
     },
 };
