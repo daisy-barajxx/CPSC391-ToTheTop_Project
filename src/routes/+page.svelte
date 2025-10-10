@@ -1,6 +1,6 @@
 <script lang="ts">
-    let searchTerm = "";
-    let results: { name: string; symbol: string }[] = [];
+    let searchTerm = $state("");
+    let results: { name: string; symbol: string }[] = $state([]);
 
     async function search() {
         if (!searchTerm) {
@@ -13,20 +13,24 @@
 </script>
 
 <h1>Stock Ticker Search</h1>
+
 <input
     placeholder="Search stocks by name or symbol..."
     type="text"
     bind:value={searchTerm}
-    on:input={search}
+    oninput={search}
 />
+
 {#if searchTerm}
     {#if results.length > 0}
         <ul>
-        {#each results as stock}
-            <li>
-                <a href={`/stocks/${stock.symbol}`}>{stock.name} ({stock.symbol})</a>
-            </li>
-        {/each}
+            {#each results as stock}
+                <li>
+                    <a href={`/stocks/${stock.symbol}`}
+                        >{stock.name} ({stock.symbol})</a
+                    >
+                </li>
+            {/each}
         </ul>
     {:else}
         <p>No results found.</p>

@@ -1,17 +1,16 @@
-import { type RequestHandler } from "@sveltejs/kit";
-import { dummyStocks } from "$lib/server/dummyStocks";
+import { json, type RequestHandler } from "@sveltejs/kit";
+import { search } from "$lib/server/search";
 // import { stringify } from "querystring";
 
 export const GET: RequestHandler = async ({ url }) => {
     const term = url.searchParams.get("term")?.toLowerCase() || "";
 
-    const results = dummyStocks.filter(
-        (stock) =>
-            stock.name.toLowerCase().includes(term) || 
-            stock.symbol.toLowerCase().includes(term)
-    );
+    // Don't waste time searching with no search term
+    if (term == "") {
+        return json([]);
+    }
 
-    return new Response(JSON.stringify(results), {
-        headers: { 'Content-Type': 'application/json'}
-    });
+    const results = await search(term);
+
+    return json(results);
 };
