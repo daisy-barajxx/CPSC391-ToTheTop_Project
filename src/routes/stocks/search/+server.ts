@@ -1,12 +1,17 @@
-import { search } from "$lib/server/search";
-import { error, json, type RequestHandler } from "@sveltejs/kit";
+import { type RequestHandler } from "@sveltejs/kit";
+import { dummyStocks } from "$lib/server/dummyStocks";
+// import { stringify } from "querystring";
 
 export const GET: RequestHandler = async ({ url }) => {
-    const term = url.searchParams.get("term");
+    const term = url.searchParams.get("term")?.toLowerCase() || "";
 
-    if (!term) {
-        error(400, "A search term must be supplied");
-    }
+    const results = dummyStocks.filter(
+        (stock) =>
+            stock.name.toLowerCase().includes(term) || 
+            stock.symbol.toLowerCase().includes(term)
+    );
 
-    return json(await search(term));
+    return new Response(JSON.stringify(results), {
+        headers: { 'Content-Type': 'application/json'}
+    });
 };
