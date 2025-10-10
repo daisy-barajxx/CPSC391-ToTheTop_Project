@@ -1,12 +1,19 @@
 <script lang="ts">
-    let searchTerm = $state("");
-    let results: { name: string; symbol: string }[] = $state([]);
+    import type { SearchResult } from "$lib";
 
-    async function search() {
+    let searchTerm = $state("");
+    let results: SearchResult[] = $state([]);
+
+    $effect(() => {
         if (!searchTerm) {
             results = [];
             return;
         }
+
+        search();
+    });
+
+    async function search() {
         const res = await fetch(`/stocks/search?term=${searchTerm}`);
         results = await res.json();
     }
@@ -18,7 +25,6 @@
     placeholder="Search stocks by name or symbol..."
     type="text"
     bind:value={searchTerm}
-    oninput={search}
 />
 
 {#if searchTerm}
@@ -36,11 +42,3 @@
         <p>No results found.</p>
     {/if}
 {/if}
-
-<!-- <h1>Welcome to SvelteKit</h1>
-<p>
-Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the
-    documentation
-</p>
-
-<a href="stocks/msft">This is a link to a stock.</a> -->
