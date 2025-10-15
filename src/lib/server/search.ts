@@ -1,4 +1,3 @@
-import { dev } from "$app/environment";
 import type { SearchResult } from "$lib";
 import sql from "./db";
 import { dummyStocks } from "./dummyStocks";
@@ -8,11 +7,11 @@ export async function search(term: string): Promise<SearchResult[]> {
         throw new Error("Search term is required");
     }
 
-    // Temp
-    if (true) {
+    // Use dummy data if Vitest or Playwright is running
+    if (process.env.PLAYWRIGHT_TEST_BASE_URL || process.env.VITEST) {
         const lowerTerm = term.toLowerCase();
 
-        const results = await dummyStocks.filter(
+        const results = dummyStocks.filter(
             (stock) =>
                 stock.name.toLowerCase().includes(lowerTerm) ||
                 stock.symbol.toLowerCase().includes(lowerTerm)
