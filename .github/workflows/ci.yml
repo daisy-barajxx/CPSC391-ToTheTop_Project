@@ -25,7 +25,9 @@ jobs:
       run: npm ci
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
-    - name: Svelte check
-      run: npm run check
     - name: Run unit and e2e tests
       run: npm test
+    - name: Svelte check
+      run: npm run check
+    - name: Linting
+      run: npm run lint
