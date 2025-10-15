@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { SearchResult } from "$lib";
+    import { resolve } from "$app/paths";
 
     let searchTerm = $state("");
     let results: SearchResult[] = $state([]);
@@ -30,11 +31,11 @@
 {#if searchTerm}
     {#if results.length > 0}
         <ul>
-            {#each results as stock}
+            {#each results as stock (stock.symbol)}
                 <li>
-                    <a href={`/stocks/${stock.symbol}`}
-                        >{stock.name} ({stock.symbol})</a
-                    >
+                    <a href={resolve(`/stocks/${stock.symbol}`)}>
+                        {stock.name} ({stock.symbol})
+                    </a>
                 </li>
             {/each}
         </ul>
