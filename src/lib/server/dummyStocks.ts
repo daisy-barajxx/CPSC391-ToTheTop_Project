@@ -4,7 +4,7 @@ export const dummyStocks = [
 		symbol: "AAPL",
 		price: 249.34,
 		priceChange: 2.45,        
-		percentChange: 0.99       
+		percentChange: 0.99
 	},
 	{
 		name: "Microsoft Corporation",

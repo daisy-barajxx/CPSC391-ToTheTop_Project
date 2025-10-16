@@ -1,58 +1,83 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-    import { formatPrice, formatCurrency, getArrow } from '$lib/formatters';
+    import type { PageProps } from "./$types";
+    import { formatPrice, formatCurrency, getArrow } from "$lib/formatters";
+    import * as Plot from "@observablehq/plot";
 
-	let { data } = $props<{ data: PageData }>();
-	const { stock, symbol } = data;
+    let { data }: PageProps = $props();
+    const { stock, symbol, priceHistory } = data;
 
+    let priceDiv: HTMLElement | undefined = $state();
 
-	const arrow = getArrow(stock.percentChange);
+    const arrow = getArrow(stock.percentChange);
     const isPositive = stock.percentChange > 0;
-	const isNegative = stock.percentChange < 0;
-	const changeClass = isPositive ? 'positive' : isNegative ? 'negative' : 'neutral';
+    const isNegative = stock.percentChange < 0;
+    const changeClass = isPositive
+        ? "positive"
+        : isNegative
+          ? "negative"
+          : "neutral";
+
+    $effect(() => {
+        const plot = Plot.line(priceHistory);
+
+        priceDiv?.append(
+            plot.plot({
+                x: {
+                    label: "Date",
+                },
+                y: {
+                    label: "Close Price",
+                    grid: true,
+                },
+            })
+        );
+    });
 </script>
 
-<div>
-	<div>
-		<h1>{symbol}</h1>
-		<p>{stock.name}</p>
-	</div>
+<main>
+    <div>
+        <h1>{symbol}</h1>
+        <p>{stock.name}</p>
+    </div>
 
-	<div>
-		<div>
-			<p>USD</p>
-			<p>{formatPrice(stock.price)}</p>
-		</div>
+    <div>
+        <div>
+            <p>USD</p>
+            <p>{formatPrice(stock.price)}</p>
+        </div>
 
-		<div>
-			<span class={changeClass}>
-				{arrow.symbol}
-			</span>
-			<span class={changeClass}>
-				{formatCurrency(Math.abs(stock.priceChange))}
-			</span>
-			<span class={changeClass}>
-				({Math.abs(stock.percentChange).toFixed(2)}%)
-			</span>
-		</div>
-	</div>
+        <div>
+            <span class={changeClass}>
+                {arrow.symbol}
+            </span>
 
-	<div>
-		<h2>Price Chart</h2>
-		<p>Chart will render here</p>
-	</div>
-</div>
+            <span class={changeClass}>
+                {formatCurrency(Math.abs(stock.priceChange))}
+            </span>
+
+            <span class={changeClass}>
+                ({Math.abs(stock.percentChange).toFixed(2)}%)
+            </span>
+        </div>
+    </div>
+
+    <div>
+        <h2>Price Chart</h2>
+
+        <div bind:this={priceDiv} role="img"></div>
+    </div>
+</main>
 
 <style>
     .positive {
-	color: green;
+        color: green;
     }
 
     .negative {
-	color: red;
+        color: red;
     }
 
     .neutral {
-	color: gray;
+        color: gray;
     }
 </style>
