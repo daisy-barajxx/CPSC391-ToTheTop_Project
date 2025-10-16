@@ -2,11 +2,14 @@
 	import type { PageData } from './$types';
     import { formatPrice, formatCurrency, getArrow } from '$lib/formatters';
 
-	let { data }: { data: PageData } = $props();
+	let { data } = $props<{ data: PageData }>();
 	const { stock, symbol } = data;
 
 
 	const arrow = getArrow(stock.percentChange);
+    const isPositive = stock.percentChange > 0;
+	const isNegative = stock.percentChange < 0;
+	const changeClass = isPositive ? 'positive' : isNegative ? 'negative' : 'neutral';
 </script>
 
 <div>
@@ -22,17 +25,14 @@
 		</div>
 
 		<div>
-			<span class={stock.percentChange >= 0 ? 'positive' : 
-            stock.percentChange < 0 ? 'negative' : 'neutral'}>
+			<span class={changeClass}>
 				{arrow.symbol}
 			</span>
-			<span class={stock.percentChange >= 0 ? 'positive' : 
-            stock.percentChange < 0 ? 'negative' : 'neutral'}>
-				{stock.priceChange >= 0 ? '' : ''}{formatCurrency(Math.abs(stock.priceChange))}
+			<span class={changeClass}>
+				{formatCurrency(Math.abs(stock.priceChange))}
 			</span>
-			<span class={stock.percentChange >= 0 ? 'positive' : 
-            stock.percentChange < 0 ? 'negative' : 'neutral'}>
-				({stock.percentChange >= 0 ? '' : ''}{Math.abs(stock.percentChange).toFixed(2)}%)
+			<span class={changeClass}>
+				({Math.abs(stock.percentChange).toFixed(2)}%)
 			</span>
 		</div>
 	</div>
