@@ -2,11 +2,13 @@
     import type { PageProps } from "./$types";
     import { formatPrice, formatCurrency, getArrow } from "$lib/formatters";
     import * as Plot from "@observablehq/plot";
+    import type { TimeRange } from "$lib";
 
     let { data }: PageProps = $props();
     const { stock, symbol, priceHistory } = data;
 
     let priceDiv: HTMLElement | undefined = $state();
+    let timerange: TimeRange = $state("1M");
 
     const arrow = getArrow(stock.percentChange);
     const isPositive = stock.percentChange > 0;
@@ -18,7 +20,12 @@
           : "neutral";
 
     $effect(() => {
-        const plot = Plot.line(priceHistory);
+        const plot = Plot.line(
+            priceHistory.ohlc.map((d) => [d[0], d[4]]),
+            {
+                stroke: isPositive ? "green" : isNegative ? "red" : "gray",
+            }
+        );
 
         priceDiv?.append(
             plot.plot({
@@ -64,6 +71,15 @@
     <div>
         <h2>Price Chart</h2>
 
+        {#each ["1D", "5D", "1M", "3M", "6M", "1Y", "MAX"] as range}
+            <button
+                onclick={() => (timerange = range as TimeRange)}
+                class:active={timerange === range}
+            >
+                {range}
+            </button>
+        {/each}
+
         <div bind:this={priceDiv} role="img"></div>
     </div>
 </main>
@@ -79,5 +95,10 @@
 
     .neutral {
         color: gray;
+    }
+
+    button.active {
+        font-weight: bold;
+        text-decoration: underline;
     }
 </style>
