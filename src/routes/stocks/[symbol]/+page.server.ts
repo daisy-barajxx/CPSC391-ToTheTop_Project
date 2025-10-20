@@ -1,13 +1,15 @@
 import type { PageServerLoad } from "./$types";
 import { dummyStocks } from "$lib/server/dummyStocks";
 import { error } from "@sveltejs/kit";
-import type { StockOHLC } from "$lib";
+import type { Stock, StockOHLC } from "$lib";
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
     const symbol = params.symbol.toUpperCase();
 
     // TODO: Replace with real stock data
-    const stock = dummyStocks.find((s) => s.symbol === symbol);
+    const stock = dummyStocks.find((s) => s.symbol === symbol) as
+        | Stock
+        | undefined;
 
     if (!stock) {
         throw error(400, "Stock does not exist.");
