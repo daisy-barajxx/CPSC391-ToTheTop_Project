@@ -2,18 +2,15 @@ import { json, type RequestHandler } from "@sveltejs/kit";
 import { search } from "$lib/server/search";
 
 export const GET: RequestHandler = async ({ url }) => {
-    // const term = url.searchParams.get("term") || "";
+    const term = (url.searchParams.get("term") || "").trim();
 
-    // Don't waste time searching with no search term
-    // if (term == "") {
-    //     return json([]);
-    // }
+    // Avoid wasteful queries; require at least 1 meaningful char
+    if (term.length < 1) {
+        return json([]);
+    }
 
-    // const results = await search(term);
+    // Perform search and cap results to reduce payload
+    const results = search(term).slice(0, 5);
 
-//lines 15 & 16 for dummy data 
-    const term = url.searchParams.get("term") || "";
-    const results = search(term);
-    
     return json(results);
 };

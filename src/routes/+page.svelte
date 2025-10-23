@@ -4,19 +4,56 @@
 
     let searchTerm = $state("");
     let results: SearchResult[] = $state([]);
+    let loading = $state(false);
+    let errorMessage = $state("");
+
+    // Debounce typing and cancel in-flight requests to avoid flooding the server
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
 
     $effect(() => {
-        if (!searchTerm) {
+        const term = searchTerm.trim();
+
+        // Clear pending debounce on each change
+        if (debounceId) clearTimeout(debounceId);
+        errorMessage = "";
+
+        // Reset state when empty or too short
+        if (term.length < 1) {
+            if (controller) controller.abort();
             results = [];
+            loading = false;
             return;
         }
 
-        search();
+        // Debounce: wait for user to pause typing
+        debounceId = setTimeout(() => {
+            search(term);
+        }, 250);
     });
 
-    async function search() {
-        const res = await fetch(`/stocks/search?term=${searchTerm}`);
-        results = await res.json();
+    async function search(term: string) {
+        try {
+            // Cancel the previous request, if any
+            if (controller) controller.abort();
+            controller = new AbortController();
+            loading = true;
+
+            const res = await fetch(`/stocks/search?term=${encodeURIComponent(term)}` , {
+                signal: controller.signal
+            });
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+            const data = (await res.json()) as SearchResult[];
+            results = data;
+        } catch (err: unknown) {
+            // Ignore abort errors; surface others
+            if (!(err instanceof DOMException && err.name === "AbortError")) {
+                errorMessage = "Search failed. Please try again.";
+            }
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
@@ -29,6 +66,12 @@
 />
 
 {#if searchTerm}
+    {#if loading}
+        <p>Searching…</p>
+    {/if}
+    {#if errorMessage}
+        <p>{errorMessage}</p>
+    {/if}
     {#if results.length > 0}
         <ul>
             {#each results as stock (stock.symbol)}
@@ -40,6 +83,8 @@
             {/each}
         </ul>
     {:else}
-        <p>No results found.</p>
+        {#if !loading && searchTerm.trim().length >= 1}
+            <p>No results found.</p>
+        {/if}
     {/if}
 {/if}
