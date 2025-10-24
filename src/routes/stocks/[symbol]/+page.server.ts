@@ -3,17 +3,22 @@ import { dummyStocks } from "$lib/server/dummyStocks";
 import { error } from "@sveltejs/kit";
 import type { Stock, StockOHLC } from "$lib";
 
+interface RawOHLC {
+  t: string;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+}
+
 export const load: PageServerLoad = async ({ params, fetch }) => {
     const symbol = params.symbol.toUpperCase();
 
     // TODO: Replace with real stock data
-    const stock = dummyStocks.find((s) => s.symbol === symbol) as
-        | Stock
-        | undefined;
-
-    if (!stock) {
-        throw error(400, "Stock does not exist.");
-    }
+   const stock = dummyStocks.find((s) => s.symbol === symbol) as Stock | undefined;
+  if (!stock) {
+    throw error(400, "Stock does not exist.");
+  }
 
     // TODO: Replace with real stock price history data
     const priceHistoryRaw = await (await fetch("/aapl-ohlc-data.json")).json();

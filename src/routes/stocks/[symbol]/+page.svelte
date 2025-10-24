@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
-    import { formatPrice, formatCurrency, getArrow } from "$lib/formatters";
+    import { formatDate, formatPrice, formatChangeDisplay } from "$lib/formatters";
     import * as Plot from "@observablehq/plot";
     import { TimeRange } from "$lib";
 
@@ -10,19 +10,11 @@
     let priceDiv: HTMLElement | undefined = $state();
     let timerange = $state(TimeRange["1M"]);
 
-    const arrow = getArrow(stock.percentChange);
-    const isPositive = stock.percentChange > 0;
-    const isNegative = stock.percentChange < 0;
-    const changeClass = isPositive
-        ? "positive"
-        : isNegative
-          ? "negative"
-          : "neutral";
+    const change = formatChangeDisplay(stock.priceChange, stock.percentChange);
 
     function timeRangeDate(range: TimeRange): Date {
         // TODO: Replace with current date`
-        const now = new Date("2025-10-15").valueOf();
-
+        const now = Date.now();
         let daysToSubtract: number;
 
         switch (range) {
@@ -57,89 +49,95 @@
 
         // TODO: Replace with real data fetching based on timerange
 
-        const startDate = timeRangeDate(timerange);
-        const data = priceHistory.ohlc.filter((d) => d[0] >= startDate);
+         const startDate = timeRangeDate(timerange);
+        const filtered = priceHistory.ohlc.filter((d) => d[0] >= startDate);
 
         // FIXME: Plot displays dates in UTC, and cannot be easily forced to use eastern time
         const plot = Plot.line(
-            data.map((d) => [d[0], d[4]]),
+            filtered.map((d) => [d[0], d[4]]),
             {
-                stroke: isPositive ? "green" : isNegative ? "red" : "gray",
-                tip: true,
-            }
+            stroke: stock.percentChange > 0 ? "green" : stock.percentChange < 0 ? "red" : "gray",
+            tip: true,
+             }
         );
 
         priceDiv?.append(
             plot.plot({
-                x: {
-                    label: "Date",
-                },
-                y: {
-                    label: "Close Price",
-                    grid: true,
-                },
+                x: { label: "Date" },
+                y: { label: "Close Price", grid: true, },
             })
         );
     });
 </script>
 
 <main>
-    <div>
-        <h1>{symbol}</h1>
-        <p>{stock.name}</p>
-    </div>
+<!-- Date -->
+  <div class="date">{formatDate(new Date())}</div>
 
-    <div>
-        <div>
-            <p>USD</p>
-            <p>{formatPrice(stock.price)}</p>
-        </div>
+  <!-- Symbol + name -->
+  <div class="symbol-row">
+    <span class="symbol-box"><b>{symbol}</b></span>
+    <span class="stock-name">{stock.name}</span>
+  </div>
 
-        <div>
-            <span class={changeClass}>
-                {arrow.symbol}
-            </span>
+  <!-- Price + change -->
+  <div class="price-row">
+    USD {formatPrice(stock.price)}
+    <span style="color:{change.color}">{change.text}</span>
+  </div>
 
-            <span class={changeClass}>
-                {formatCurrency(Math.abs(stock.priceChange))}
-            </span>
+  <!-- Graph -->
+  <div class="graph">
+    <h2>Price Chart</h2>
+    {#each Object.values(TimeRange) as range}
+      <button
+        onclick={() => (timerange = range)}
+        class:active={timerange === range}
+      >
+        {range}
+      </button>
+    {/each}
 
-            <span class={changeClass}>
-                ({Math.abs(stock.percentChange).toFixed(2)}%)
-            </span>
-        </div>
-    </div>
-
-    <div>
-        <h2>Price Chart</h2>
-
-        {#each Object.values(TimeRange) as range}
-            <button
-                onclick={() => (timerange = range)}
-                class:active={timerange === range}
-            >
-                {range}
-            </button>
-        {/each}
-
-        <div bind:this={priceDiv} role="img"></div>
-    </div>
+    <div bind:this={priceDiv} role="img"></div>
+  </div>
 </main>
 
 <style>
-    .positive {
-        color: green;
-    }
+  .stock-detail {
+    text-align: center;
+    margin-top: 20px;
+  }
 
-    .negative {
-        color: red;
-    }
+  .date {
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #555;
+  }
 
-    .neutral {
-        color: gray;
-    }
+  .symbol-row {
+    margin: 10px 0;
+  }
 
-    button.active {
-        font-weight: bold;
-    }
+  .symbol-box {
+    border: 1px solid black;
+    padding: 4px 8px;
+    margin-right: 8px;
+    display: inline-block;
+  }
+
+  .price-row {
+    margin: 10px 0;
+    font-size: 1.2em;
+  }
+
+  .graph {
+    margin-top: 20px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  button.active {
+    font-weight: bold;
+  }
 </style>
