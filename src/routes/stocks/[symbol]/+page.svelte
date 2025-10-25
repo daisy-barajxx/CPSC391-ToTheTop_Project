@@ -110,7 +110,7 @@
 
   .date {
     margin-bottom: 10px;
-    font-size: 0.9em;
+    font-size: 1.7em;
     color: #555;
   }
 
@@ -119,20 +119,25 @@
   }
 
   .symbol-box {
-    border: 1px solid black;
-    padding: 4px 8px;
+    border: 2px solid black;
+    padding: 4px 10px;
     margin-right: 8px;
     display: inline-block;
+    font-size: 3rem;
+  }
+
+  .stock-name {
+    font-size: 3rem;
   }
 
   .price-row {
     margin: 10px 0;
-    font-size: 1.2em;
+    font-size: 1.5em;
   }
 
   .graph {
     margin-top: 20px;
-    width: 80%;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
   }
