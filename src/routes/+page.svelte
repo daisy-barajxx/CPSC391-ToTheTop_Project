@@ -6,6 +6,7 @@
     let results: SearchResult[] = $state([]);
     let loading = $state(false);
     let errorMessage = $state("");
+    let lastCompletedTerm = $state("");
 
     // Debounce typing and cancel in-flight requests to avoid flooding the server
     let debounceId: ReturnType<typeof setTimeout> | null = null;
@@ -23,13 +24,18 @@
             if (controller) controller.abort();
             results = [];
             loading = false;
+            lastCompletedTerm = "";
             return;
         }
 
-        // Debounce: wait for user to pause typing
+        // Debounce: wait briefly for user to pause typing.
+        // Fire immediately for the first character so results appear as soon as typing starts
+        const delay = term.length === 1 ? 0 : 150;
+        loading = true;
+
         debounceId = setTimeout(() => {
             search(term);
-        }, 250);
+        }, delay);
     });
 
     async function search(term: string) {
@@ -46,6 +52,7 @@
 
             const data = (await res.json()) as SearchResult[];
             results = data;
+            lastCompletedTerm = term;
         } catch (err: unknown) {
             // Ignore abort errors; surface others
             if (!(err instanceof DOMException && err.name === "AbortError")) {
@@ -83,7 +90,7 @@
             {/each}
         </ul>
     {:else}
-        {#if !loading && searchTerm.trim().length >= 1}
+        {#if !loading && searchTerm.trim().length >= 1 && lastCompletedTerm === searchTerm.trim()}
             <p>No results found.</p>
         {/if}
     {/if}
