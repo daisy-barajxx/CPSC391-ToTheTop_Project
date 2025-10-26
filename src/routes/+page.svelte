@@ -68,6 +68,7 @@
         id="search-input"
         placeholder="Search stocks by name or symbol..."
         type="text"
+        aria-label="Search stocks"
         bind:value={searchTerm}
         oninput={onSearchInput}
         autocomplete="off"
