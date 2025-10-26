@@ -6,6 +6,8 @@
 
 <svelte:head>
     <link rel="icon" href={favicon} />
+    <title>To The Top</title>
+    <meta name="description" content="Stock market search and analysis." />
 </svelte:head>
 
 <nav>
