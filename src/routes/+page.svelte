@@ -2,84 +2,78 @@
     import type { SearchResult } from "$lib";
     import { resolve } from "$app/paths";
 
+    /** Time (ms) to delay search requests. */
+    const DEBOUNCE_DELAY = 200;
+    /** Num characters to trigger search.*/
+    const DEBOUNCE_CHARS = 3;
+
     let searchTerm = $state("");
-    let results: SearchResult[] = $state([]);
-    let loading = $state(false);
+    let charCount = $state(0);
+    let results: SearchResult[] | undefined = $state(undefined);
     let errorMessage = $state("");
-    let lastCompletedTerm = $state("");
 
-    // Debounce typing and cancel in-flight requests to avoid flooding the server
-    let debounceId: ReturnType<typeof setTimeout> | null = null;
-    let controller: AbortController | null = null;
+    let debounceId: NodeJS.Timeout | null = null;
 
-    $effect(() => {
+    function onSearchInput() {
         const term = searchTerm.trim();
+        charCount++;
 
-        // Clear pending debounce on each change
-        if (debounceId) clearTimeout(debounceId);
-        errorMessage = "";
+        if (debounceId) {
+            clearTimeout(debounceId);
+        }
 
-        // Reset state when empty or too short
-        if (term.length < 1) {
-            if (controller) controller.abort();
+        // If the term is empty, reset state
+        if (term.length === 0) {
+            charCount = 0;
             results = [];
-            loading = false;
-            lastCompletedTerm = "";
+            errorMessage = "";
             return;
         }
 
-        // Debounce: wait briefly for user to pause typing.
-        // Fire immediately for the first character so results appear as soon as typing starts
-        const delay = term.length === 1 ? 0 : 150;
-        loading = true;
+        // If we've typed enough characters, search immediately
+        if (charCount >= DEBOUNCE_CHARS && term.length > 0) {
+            charCount = 0;
+            search(term);
+            return;
+        }
 
         debounceId = setTimeout(() => {
             search(term);
-        }, delay);
-    });
+        }, DEBOUNCE_DELAY);
+    }
 
     async function search(term: string) {
+        results = undefined;
+        errorMessage = "";
+
         try {
-            // Cancel the previous request, if any
-            if (controller) controller.abort();
-            controller = new AbortController();
-            loading = true;
+            const res = await fetch(
+                `/stocks/search?term=${encodeURIComponent(term)}`
+            );
 
-            const res = await fetch(`/stocks/search?term=${encodeURIComponent(term)}` , {
-                signal: controller.signal
-            });
-            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-
-            const data = (await res.json()) as SearchResult[];
-            results = data;
-            lastCompletedTerm = term;
-        } catch (err: unknown) {
-            // Ignore abort errors; surface others
-            if (!(err instanceof DOMException && err.name === "AbortError")) {
-                errorMessage = "Search failed. Please try again.";
+            if (!res.ok) {
+                errorMessage = `Request failed: ${res.status}`;
+                return;
             }
-        } finally {
-            loading = false;
+
+            results = await res.json();
+        } catch (error) {
+            errorMessage = `Unknown error: ${error}`;
         }
     }
 </script>
-
-<h1>Stock Ticker Search</h1>
 
 <input
     placeholder="Search stocks by name or symbol..."
     type="text"
     bind:value={searchTerm}
+    oninput={onSearchInput}
 />
 
 {#if searchTerm}
-    {#if loading}
-        <p>Searching…</p>
-    {/if}
     {#if errorMessage}
         <p>{errorMessage}</p>
-    {/if}
-    {#if results.length > 0}
+    {:else if results?.length ?? 1 > 0}
         <ul>
             {#each results as stock (stock.symbol)}
                 <li>
@@ -89,9 +83,5 @@
                 </li>
             {/each}
         </ul>
-    {:else}
-        {#if !loading && searchTerm.trim().length >= 1 && lastCompletedTerm === searchTerm.trim()}
-            <p>No results found.</p>
-        {/if}
     {/if}
 {/if}

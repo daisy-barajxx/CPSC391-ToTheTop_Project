@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) => {
     }
 
     // Perform search and cap results to reduce payload
-    const results = search(term).slice(0, 5);
+    const results = await search(term);
 
     return json(results);
 };
