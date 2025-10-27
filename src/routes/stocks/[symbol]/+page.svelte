@@ -1,8 +1,17 @@
 <script lang="ts">
-    import type { PageProps } from "./$types";
+	import type { PageData } from './$types';
 
-    let { data }: PageProps = $props();
+	let { data } = $props<{ data: PageData }>();
+	const { stock, symbol } = data;
 </script>
 
-<h1>Stock {data.symbol}</h1>
-<p>This is a dummy stock page for {data.symbol}.</p>
+<div>
+	<h1>{symbol}</h1>
+	<p>{stock.name}</p>
+
+	<div>
+		<h2>Price Chart</h2>
+		<p>Chart will render here</p>
+	</div>
+</div>
+
