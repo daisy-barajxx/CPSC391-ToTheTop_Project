@@ -2,11 +2,10 @@ import type { PageServerLoad } from "./$types";
 import { dummyStocks } from "$lib/server/dummyStocks";
 import { error } from "@sveltejs/kit";
 import type { Stock, StockOHLC } from "$lib";
-
+import { env } from "$env/dynamic/private";
 import { GetStocksAggregatesSortEnum, GetStocksAggregatesTimespanEnum, restClient } from "@polygon.io/client-js";
 
-const apiKey = "KNugSCBuDCeuAw28nz3pgvpj8iopDqoz";
-const rest = restClient(apiKey, "https://api.polygon.io");
+const rest = restClient(env.APIKEY!, "https://api.polygon.io");
 
 interface RawOHLC {
   t: string;
@@ -38,7 +37,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
         symbol: priceHistoryRaw.ticker,
         timespan: "day",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ohlc: priceHistoryRaw?.results.map((v: any) => {
+        ohlc: priceHistoryRaw.results.map((v: any) => {
             return [new Date(v.t), v.o, v.h, v.l, v.c];
         }),
     };
@@ -54,7 +53,11 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 async function getStockName(symbol : string) {
   try {
     const response = await rest.getTicker(symbol);
-    return response;
+    if (response.results) {
+      return response;
+    } else {
+      throw error(400, "No historical data found.")
+    }
   } catch (e) {
     throw error(400, "Stock does not exist.");
   }
