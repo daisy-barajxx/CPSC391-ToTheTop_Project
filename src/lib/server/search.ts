@@ -29,3 +29,18 @@ export async function search(term: string): Promise<SearchResult[]> {
         return { symbol: val.symbol, name: val.name };
     });
 }
+
+export async function getSymbolName(symbol: string): Promise<string> {
+    if (!symbol) {
+        throw new Error("Symbol is required");
+    }
+
+    const results =
+        await sql`SELECT name FROM stocks WHERE symbol = ${symbol} LIMIT 1`;
+
+    if (results.length == 0) {
+        throw new Error("Stock not found");
+    }
+
+    return results[0].name;
+}

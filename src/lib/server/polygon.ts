@@ -4,12 +4,13 @@ import {
 } from "@polygon.io/client-js";
 import { env } from "$env/dynamic/private";
 import { error } from "@sveltejs/kit";
-import type { TimeRange } from "$lib";
+import type { StockOHLC, TimeRange } from "$lib";
 
-const rest = restClient(env.APIKEY!, "https://api.polygon.io");
+const rest = restClient(env.API_KEY!, "https://api.polygon.io");
 
 export async function getStockInfo(symbol: string) {
     const response = await getStock(symbol);
+
     const ticker = response.ticker;
     let open, close;
     let priceChange, percentChange;
@@ -41,7 +42,7 @@ async function getStock(symbol: string) {
         //Gets previous days data
         const response = await rest.getPreviousStocksAggregates(symbol, true);
         return response;
-    } catch (e) {
+    } catch {
         throw error(400, "Date inacessible.");
     }
 }
@@ -86,7 +87,7 @@ export async function getStockHistory(symbol: string, timeRange: TimeRange) {
     const startDate = new Date(now - daysToSubtract * 24 * 60 * 60 * 1000);
 
     try {
-        return await rest.getStocksAggregates(
+        const res = await rest.getStocksAggregates(
             symbol,
             timeMultiplier,
             timespanEnum,
@@ -94,7 +95,18 @@ export async function getStockHistory(symbol: string, timeRange: TimeRange) {
             now.toString(),
             true
         );
+
+        const ohlc: StockOHLC = {
+            symbol: res.ticker,
+            timespan: timespanEnum,
+            ohlc:
+                res.results?.map((v) => {
+                    return [new Date(v.t), v.o, v.h, v.l, v.c];
+                }) ?? [],
+        };
+
+        return ohlc;
     } catch (e) {
-        throw error(400, `${e}`);
+        throw Error(`Failed to fetch stock history: ${e}`);
     }
 }
