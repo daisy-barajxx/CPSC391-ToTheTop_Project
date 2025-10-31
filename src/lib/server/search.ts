@@ -9,7 +9,7 @@ export async function search(term: string): Promise<SearchResult[]> {
 
     // Use dummy data if Vitest or Playwright is running
     if (process.env.PLAYWRIGHT_TEST_BASE_URL || process.env.VITEST) {
-        const lowerTerm = term.toLowerCase();
+        const lowerTerm = term.toLowerCase().trim();
 
         const results = dummyStocks.filter(
             (stock) =>
@@ -28,4 +28,19 @@ export async function search(term: string): Promise<SearchResult[]> {
     return results.map((val) => {
         return { symbol: val.symbol, name: val.name };
     });
+}
+
+export async function getSymbolName(symbol: string): Promise<string> {
+    if (!symbol) {
+        throw new Error("Symbol is required");
+    }
+
+    const results =
+        await sql`SELECT name FROM stocks WHERE symbol = ${symbol} LIMIT 1`;
+
+    if (results.length == 0) {
+        throw new Error("Stock not found");
+    }
+
+    return results[0].name;
 }

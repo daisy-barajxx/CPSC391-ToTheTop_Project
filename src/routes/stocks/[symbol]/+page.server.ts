@@ -1,12 +1,17 @@
 import type { PageServerLoad } from "./$types";
-import { dummyStocks } from "$lib/server/dummyStocks";
+import { TimeRange } from "$lib";
+import { getStockHistory } from "$lib/server/polygon";
+import { getSymbolName } from "$lib/server/search";
 
 export const load: PageServerLoad = async ({ params }) => {
-	const symbol = params.symbol.toUpperCase();
-	const stock = dummyStocks.find((s) => s.symbol === symbol);
+    const symbol = params.symbol.toUpperCase();
 
-    return { 
-		stock,
-		symbol 
-	};
+    const name = await getSymbolName(symbol);
+    const ohlcHistory = await getStockHistory(symbol, TimeRange["1M"]);
+
+    return {
+        symbol,
+        name,
+        ohlcHistory,
+    };
 };
