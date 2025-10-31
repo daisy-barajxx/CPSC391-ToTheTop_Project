@@ -119,11 +119,6 @@
 </main>
 
 <style>
-    .stock-detail {
-        text-align: center;
-        margin-top: 20px;
-    }
-
     .date {
         margin-bottom: 10px;
         font-size: 1.7em;
