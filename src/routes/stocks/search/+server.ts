@@ -3,7 +3,7 @@ import { search } from "$lib/server/search";
 
 export const GET: RequestHandler = async ({ url }) => {
     const term = url.searchParams.get("term") || "";
-    const results = search(term);
-    
+    const results = await search(term);
+
     return json(results);
 };
