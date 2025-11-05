@@ -91,9 +91,9 @@
             />
 
             {#if dataAccepted}
-                Collect all my data and personal information collected.
+                Collect all my data and personal information.
             {:else}
-                Do not collect all my data and personal information collected.
+                Do not collect all my data and personal information.
             {/if}
         </label>
 
