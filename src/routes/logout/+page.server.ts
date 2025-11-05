@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
             await deleteSession(existingSession.id);
             cookies.delete(SESSION_COOKIE_NAME, { path: "/" });
 
-            return;
+            throw redirect(302, "/");
         }
     }
 

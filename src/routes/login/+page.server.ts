@@ -8,6 +8,7 @@ import {
 import sql from "$lib/server/db";
 import { verify } from "@node-rs/argon2";
 import { error } from "@sveltejs/kit";
+import { validateUserInfo } from "$lib/user";
 
 export const load: PageServerLoad = async ({ cookies }) => {
     if (await isValidSession(cookies)) {
@@ -26,10 +27,16 @@ export const actions: Actions = {
             throw error(400, "Username and password are required");
         }
 
+        const errors = validateUserInfo(username, password);
+
+        if (errors.size > 0) {
+            return { invalid: errors };
+        }
+
         const users =
             await sql`SELECT * FROM users WHERE username = ${username}`;
 
-        if (users.length !== 1) {
+        if (users.length != 1) {
             return { error: "Invalid username or password" };
         }
 

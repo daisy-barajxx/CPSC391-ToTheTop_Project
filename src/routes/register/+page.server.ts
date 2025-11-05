@@ -3,7 +3,7 @@ import type { PageServerLoad } from "./$types";
 import { createSession, isValidSession } from "$lib/server/auth";
 import sql from "$lib/server/db";
 import { hash } from "@node-rs/argon2";
-import { usernameValid, passwordValid, nameValid } from "$lib/user.svelte";
+import { validateUserInfo } from "$lib/user";
 import { error } from "@sveltejs/kit";
 
 export const load: PageServerLoad = async ({ cookies }) => {
@@ -25,16 +25,10 @@ export const actions: Actions = {
             throw error(400, "All fields are required");
         }
 
-        if (!usernameValid(username)) {
-            return { error: "Invalid username" };
-        }
+        const errors = validateUserInfo(username, password, name);
 
-        if (!passwordValid(password)) {
-            return { error: "Invalid password" };
-        }
-
-        if (!nameValid(name)) {
-            return { error: "Invalid name" };
+        if (errors.size > 0) {
+            return { invalid: errors };
         }
 
         const existingUsers =
