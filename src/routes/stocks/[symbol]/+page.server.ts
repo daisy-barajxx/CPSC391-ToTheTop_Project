@@ -1,11 +1,18 @@
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { isValidSession } from "$lib/server/auth";
+import { TimeRange } from "$lib";
+import { getStockHistory } from "$lib/server/polygon";
+import { getSymbolName } from "$lib/server/search";
 
-export const load: PageServerLoad = async ({ cookies, params }) => {
-    if (!(await isValidSession(cookies))) {
-        throw error(401, "Unauthorized");
-    }
+export const load: PageServerLoad = async ({ params }) => {
+    const symbol = params.symbol.toUpperCase();
 
-    return { symbol: params.symbol };
+    const name = await getSymbolName(symbol);
+    const ohlcHistory = await getStockHistory(symbol, TimeRange["1M"]);
+
+    return {
+        symbol,
+        name,
+        ohlcHistory,
+    };
 };
