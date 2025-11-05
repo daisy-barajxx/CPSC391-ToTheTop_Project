@@ -3,7 +3,7 @@ import type { PageServerLoad } from "./$types";
 import { createSession, isValidSession } from "$lib/server/auth";
 import sql from "$lib/server/db";
 import { hash } from "@node-rs/argon2";
-import { validateUserInfo } from "$lib/user";
+import { validateUserInfo } from "$lib/validate";
 import { error } from "@sveltejs/kit";
 
 export const load: PageServerLoad = async ({ cookies }) => {

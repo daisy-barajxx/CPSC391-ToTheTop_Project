@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { validateUserInfo } from "$lib/user";
+    import { validateUserInfo } from "$lib/validate";
     import type { PageProps } from "./$types";
 
     let { form }: PageProps = $props();

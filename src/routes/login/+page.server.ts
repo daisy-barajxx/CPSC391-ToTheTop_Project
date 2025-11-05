@@ -8,7 +8,7 @@ import {
 import sql from "$lib/server/db";
 import { verify } from "@node-rs/argon2";
 import { error } from "@sveltejs/kit";
-import { validateUserInfo } from "$lib/user";
+import { validateUserInfo } from "$lib/validate";
 
 export const load: PageServerLoad = async ({ cookies }) => {
     if (await isValidSession(cookies)) {
