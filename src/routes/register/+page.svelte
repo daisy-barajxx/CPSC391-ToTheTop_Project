@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { userState } from "$lib/user.svelte";
     import { validateUserInfo } from "$lib/validate";
     import type { PageProps } from "./$types";
 
@@ -16,6 +17,8 @@
     $effect(() => {
         if (form?.user) {
             // Registration was successful
+            userState.user = form.user;
+
             goto("/");
         }
     });
@@ -156,6 +159,7 @@
 
     form > button {
         transition: all 0.1s ease-in-out;
+        margin-top: 1rem;
         padding: 0.5rem;
         font-size: medium;
         background-color: var(--primary-light);

@@ -15,5 +15,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
         }
     }
 
+    console.log(sessionToken);
+
     return { user: null };
 };

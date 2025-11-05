@@ -1,6 +1,10 @@
 import { redirect, type Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { createSession, isValidSession } from "$lib/server/auth";
+import {
+    createSession,
+    isValidSession,
+    SESSION_COOKIE_NAME,
+} from "$lib/server/auth";
 import sql from "$lib/server/db";
 import { hash } from "@node-rs/argon2";
 import { validateUserInfo } from "$lib/validate";
@@ -46,7 +50,7 @@ export const actions: Actions = {
         const userId = result[0]!.id;
 
         const session = await createSession(userId);
-        cookies.set("session", session.token, { path: "/" });
+        cookies.set(SESSION_COOKIE_NAME, session.token, { path: "/" });
 
         return { user: { id: userId, name } };
     },
