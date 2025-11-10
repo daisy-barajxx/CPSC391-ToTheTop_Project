@@ -121,3 +121,30 @@ export async function isValidSession(cookies: Cookies): Promise<boolean> {
 
     return (await validateSessionToken(token)) != null;
 }
+
+/**
+ * Authorizes that the session in the cookies belongs to the given user ID.
+ * That is, make sure a user can only perform actions on their own behalf.
+ *
+ * @param cookies SvelteKit cookies object
+ * @param userId The user ID to authorize against
+ * @returns True if the session belongs to the given user ID, false otherwise. Null if no valid session exists.
+ */
+export async function authorizeUserAction(
+    cookies: Cookies,
+    userId: string
+): Promise<boolean | null> {
+    const token = cookies.get(SESSION_COOKIE_NAME);
+
+    if (!token) {
+        return null;
+    }
+
+    const session = await validateSessionToken(token);
+
+    if (!session) {
+        return null;
+    }
+
+    return session.userId == userId;
+}
