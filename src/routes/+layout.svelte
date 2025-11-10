@@ -1,5 +1,6 @@
 <script lang="ts">
     import favicon from "$lib/assets/favicon.svg";
+    import { resolve } from "$app/paths";
 
     let { children } = $props();
 </script>
@@ -12,6 +13,11 @@
 
 <nav>
     <h1>To The Top</h1>
+    <div>
+        <a href={resolve("/watchlist")} >
+            My Stock Watchlist
+        </a>
+    </div>
 </nav>
 
 {@render children?.()}
