@@ -1,0 +1,24 @@
+:root {
+    --primary-dark: #11151C;
+    --primary-light: #FFFFFC;
+    --accent-primary: #F75C03;
+    --accent-dark: #433A3F;
+    --primary-light-2: #F3F3F4;
+
+    --money-positive: #4DAA57;
+    --money-negative: #C20114;
+    --money-neutral: #596475;
+
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+h1 {
+    margin: 0.5rem 0;
+}

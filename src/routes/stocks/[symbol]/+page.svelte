@@ -1,10 +1,6 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
-    import {
-        formatDate,
-        formatPrice,
-        formatChangeDisplay,
-    } from "$lib/formatters";
+    import { formatPrice, formatChangeDisplay } from "$lib/formatters";
     import * as Plot from "@observablehq/plot";
     import { TimeRange } from "$lib";
 
@@ -12,6 +8,7 @@
     const { symbol, name, ohlcHistory } = data;
 
     let priceDiv: HTMLElement | undefined = $state();
+    let showPrice0 = $state(false);
     let timerange = $state(TimeRange["1M"]);
     let ohlcHistoryState = $state(ohlcHistory);
 
@@ -34,6 +31,7 @@
         if (res.ok) {
             const data = await res.json();
 
+            // Need to convert timestamps to Date objects since JSON turns them into strings
             data.ohlc = data.ohlc.map((d: any) => [
                 new Date(d[0]),
                 d[1],
@@ -42,7 +40,6 @@
                 d[4],
             ]);
 
-            // Need to convert timestamps to Date objects since JSON turns them into strings
             ohlcHistoryState = data;
         } else {
             console.error(
@@ -56,104 +53,161 @@
         // Remove the old plot if it exists
         priceDiv?.firstChild?.remove();
 
-        console.log(typeof ohlcHistory.ohlc[0][0]);
-
         // FIXME: Plot displays dates in UTC, and cannot be easily forced to use eastern time
-        const plot = Plot.line(
-            ohlcHistoryState.ohlc.map((d) => [d[0], d[4]]),
-            {
-                stroke:
-                    percentChange > 0
-                        ? "green"
-                        : percentChange < 0
-                          ? "red"
-                          : "gray",
-                tip: true,
-            }
-        );
+        const plotData = ohlcHistoryState.ohlc.map((d) => {
+            return { Date: d[0], Close: d[4] };
+        });
+        const min = plotData.toSorted((a, b) => a.Close - b.Close)[0];
+
+        const plotLine = Plot.line(plotData, {
+            x: "Date",
+            y: "Close",
+            stroke:
+                percentChange > 0
+                    ? "var(--money-positive)"
+                    : percentChange < 0
+                      ? "var(--money-negative)"
+                      : "var(--money-neutral)",
+            strokeWidth: 2,
+            tip: true,
+        });
+
+        const plotArea = Plot.areaY(plotData, {
+            x: "Date",
+            y: "Close",
+            y1: showPrice0 ? undefined : min.Close,
+            fill:
+                percentChange >= 0
+                    ? "var(--money-positive)"
+                    : "var(--money-negative)",
+            fillOpacity: 0.3,
+        });
 
         priceDiv?.append(
-            plot.plot({
+            Plot.plot({
                 x: { label: "Date" },
                 y: { label: "Close Price", grid: true },
+                width: 1280,
+                marks: [
+                    plotArea,
+                    plotLine,
+                    showPrice0 ? Plot.ruleY([0]) : null,
+                ],
             })
         );
     });
 </script>
 
 <main>
-    <!-- Date -->
-    <div class="date">{formatDate(new Date())}</div>
-
     <!-- Symbol + name -->
-    <div class="symbol-row">
-        <span class="symbol-box"><b>{symbol}</b></span>
-        <span class="stock-name">{name}</span>
+    <div id="symbol-row">
+        <span id="symbol-box"><b>{symbol}</b></span>
+        <span id="stock-name">{name}</span>
     </div>
 
-    <!-- Price + change -->
-    <div class="price-row">
-        USD {formatPrice(
-            ohlcHistoryState.ohlc[ohlcHistoryState.ohlc.length - 1][4]
-        )}
-        <span style="color:{change.color}">{change.text}</span>
-    </div>
+    <div id="outer">
+        <div id="price-info">
+            <!-- <div class="date">{formatDate(new SvelteDate())}</div> -->
 
-    <!-- Graph -->
-    <div class="graph">
-        <h2>Price Chart</h2>
-        {#each Object.values(TimeRange) as range}
-            <button
-                onclick={() => {
-                    timerange = range;
-                    updateOHLCHistory();
-                }}
-                class:active={timerange === range}
-            >
-                {range}
-            </button>
-        {/each}
+            <!-- Price + change -->
+            <div class="price-row">
+                {formatPrice(
+                    ohlcHistoryState.ohlc[ohlcHistoryState.ohlc.length - 1][4]
+                )}
+                <span class="currency">USD</span>
+                <span style="color:{change.color}">{change.text}</span>
+            </div>
 
-        <div bind:this={priceDiv} role="img"></div>
+            <div id="graph-outer">
+                <h2>Price Chart</h2>
+                {#each Object.values(TimeRange) as range (range)}
+                    <button
+                        onclick={() => {
+                            timerange = range;
+                            updateOHLCHistory();
+                        }}
+                        class:active={timerange === range}
+                    >
+                        {range}
+                    </button>
+                {/each}
+
+                <button
+                    onclick={() => (showPrice0 = !showPrice0)}
+                    class:active={showPrice0}
+                >
+                    {showPrice0 ? "Absolute" : "Relative"} Price
+                </button>
+
+                <div id="graph" bind:this={priceDiv} role="img"></div>
+            </div>
+        </div>
+
+        <div id="company-info"></div>
     </div>
 </main>
 
 <style>
-    .date {
-        margin-bottom: 10px;
-        font-size: 1.7em;
-        color: #555;
+    main {
+        margin: 2rem 1rem;
     }
 
-    .symbol-row {
-        margin: 10px 0;
+    #outer {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
     }
 
-    .symbol-box {
-        border: 2px solid black;
-        padding: 4px 10px;
-        margin-right: 8px;
+    #symbol-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 3rem;
+        font-family: monospace;
+    }
+
+    #symbol-box {
+        box-sizing: border-box;
+        border: 2px solid var(--primary-dark);
+        padding: 0.25rem 0.5rem;
         display: inline-block;
-        font-size: 3rem;
-    }
-
-    .stock-name {
-        font-size: 3rem;
     }
 
     .price-row {
-        margin: 10px 0;
-        font-size: 1.5em;
+        margin: 1rem 0;
+        font-size: 1.5rem;
     }
 
-    .graph {
-        margin-top: 20px;
-        width: 100%;
-        margin-left: auto;
-        margin-right: auto;
+    .currency {
+        color: var(--accent-dark);
+        font-size: 1rem;
     }
 
-    button.active {
-        font-weight: bold;
+    #graph-outer > #graph {
+        margin-top: 2rem;
+    }
+
+    #graph-outer > button {
+        transition: all 0.1s ease-in-out;
+        padding: 0.25rem 0.5rem;
+        margin-right: 0.5rem;
+        background-color: var(--primary-light);
+        border: 2px solid var(--primary-dark);
+        border-radius: 0.25rem;
+        font-size: medium;
+        color: var(--primary-dark);
+    }
+
+    #graph-outer > button:hover {
+        transition: all 0.1s ease-in-out;
+        color: var(--accent-primary);
+        border: 2px solid var(--accent-primary);
+        border-radius: 0rem;
+        cursor: pointer;
+    }
+
+    #graph-outer > button.active {
+        background-color: var(--primary-dark);
+        color: var(--primary-light);
     }
 </style>
