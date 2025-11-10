@@ -19,7 +19,7 @@
         "@eslint/compat": "^1.2.5",
         "@eslint/js": "^9.22.0",
         "@playwright/test": "^1.49.1",
-        "@sveltejs/adapter-auto": "^6.0.0",
+        "@sveltejs/adapter-node": "^5.4.0",
         "@sveltejs/kit": "^2.22.0",
         "@sveltejs/vite-plugin-svelte": "^6.0.0",
         "@types/node": "^22",
@@ -38,6 +38,7 @@
         "vitest-browser-svelte": "^0.1.0"
     },
     "dependencies": {
+        "@node-rs/argon2": "^2.0.2",
         "@observablehq/plot": "^0.6.17",
         "@polygon.io/client-js": "^8.2.0",
         "postgres": "^3.4.7"
