@@ -2,9 +2,8 @@ import { authorizeUserAction } from "$lib/server/auth";
 import { addToWatchlist, removeFromWatchlist } from "$lib/server/watchlists";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies, request, params }) => {
-    const reqData = await request.json();
-    const userId = reqData.userId;
+export const POST: RequestHandler = async ({ cookies, url, params }) => {
+    const userId = url.searchParams.get("userId");
 
     if (!userId) {
         throw error(400, "User ID is required.");
@@ -24,12 +23,17 @@ export const POST: RequestHandler = async ({ cookies, request, params }) => {
         throw error(403, "Unauthorized");
     }
 
-    return json(await addToWatchlist(userId, params.symbol));
+    const result = await addToWatchlist(userId, params.symbol);
+
+    if (result == null) {
+        throw error(400, "Stock already in watchlist.");
+    }
+
+    return json(result);
 };
 
-export const DELETE: RequestHandler = async ({ cookies, request, params }) => {
-    const reqData = await request.json();
-    const userId = reqData.userId;
+export const DELETE: RequestHandler = async ({ cookies, url, params }) => {
+    const userId = url.searchParams.get("userId");
 
     if (!params.symbol) {
         throw error(400, "Stock symbol is required.");

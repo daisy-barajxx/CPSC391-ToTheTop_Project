@@ -18,7 +18,7 @@ CREATE TABLE stocks (
 );
 
 CREATE TABLE watchlists (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     stock varchar(16) NOT NULL REFERENCES stocks(symbol) ON DELETE CASCADE,
-    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (stock, user_id)
 );
