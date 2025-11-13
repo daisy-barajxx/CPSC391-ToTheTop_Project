@@ -39,6 +39,7 @@
     let results: SearchResult[] | undefined = $state(undefined);
     let errorMessage = $state("");
 
+    // placeholder values before real data
     let holdings = $state<Holding[]>([
         {
             symbol: "AAPL",
@@ -252,6 +253,7 @@
 
             <div class="positions-header">
                 <h3>Positions</h3>
+                <!-- disabled for now; replace later -->
                 <button type="button" class="ghost-button" aria-disabled="true">
                     Manage
                 </button>
@@ -501,7 +503,7 @@
         color: var(--accent-dark);
     }
 
-    .ghost-button {
+    .ghost-button { /* change later */
         border: 1px solid var(--primary-dark);
         background: transparent;
         color: var(--primary-dark);
