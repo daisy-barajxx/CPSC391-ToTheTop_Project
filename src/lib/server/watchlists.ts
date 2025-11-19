@@ -2,6 +2,17 @@ import type { WatchlistItem } from "$lib";
 import postgres from "postgres";
 import db from "./db";
 
+/**
+ * Retrieve the watchlist for a specific user.
+ *
+ * @param userId - The unique identifier of the user whose watchlist should be fetched.
+ *                 Must be a non-empty string.
+ *
+ * @returns A Promise that resolves to an array of `WatchlistItem` objects. Each item
+ *          contains the stock identifier and the normalized userId property.
+ *
+ * @throws {Error} If `userId` is empty.
+ */
 export async function getWatchlist(userId: string): Promise<WatchlistItem[]> {
     if (!userId) {
         throw new Error("User ID is required.");
@@ -17,6 +28,16 @@ export async function getWatchlist(userId: string): Promise<WatchlistItem[]> {
     });
 }
 
+/**
+ * Checks whether a given stock symbol is present in a user's watchlist.
+ *
+ * @param userId - The non-empty identifier of the user whose watchlist will be checked.
+ * @param stock - The non-empty stock symbol to search for in the watchlist.
+ *
+ * @returns A promise that resolves to true if exactly one matching entry exists; otherwise false.
+ *
+ * @throws {Error} If either `userId` or `stock` is empty.
+ */
 export async function isInWatchlist(
     userId: string,
     stock: string
@@ -31,6 +52,17 @@ export async function isInWatchlist(
     return res[0].count == 1;
 }
 
+/**
+ * Adds a stock symbol to a user's watchlist in the database.
+ *
+ * @param userId - The ID of the user who owns the watchlist. Must be a non-empty string.
+ * @param stock - The stock symbol to add to the user's watchlist. Must be a non-empty string.
+ *
+ * @returns A promise that resolves to the created `WatchlistItem`, or `null`
+ * if the item already exists in the user's watchlist.
+ *
+ * @throws {Error} If `userId` or `stock` is empty.
+ */
 export async function addToWatchlist(
     userId: string,
     stock: string
@@ -61,6 +93,16 @@ export async function addToWatchlist(
     }
 }
 
+/**
+ * Removes a stock symbol from a user's watchlist in the database.
+ *
+ * @param userId - The ID of the user whose watchlist should be modified. Must be a non-empty string.
+ * @param stock - The stock symbol to remove from the watchlist. Must be a non-empty string.
+ *
+ * @returns A Promise that resolves when the removal operation completes.
+ *
+ * @throws {Error} If `userId` or `stock` is empty.
+ */
 export async function removeFromWatchlist(
     userId: string,
     stock: string
