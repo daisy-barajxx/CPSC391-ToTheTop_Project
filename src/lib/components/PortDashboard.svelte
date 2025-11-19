@@ -5,7 +5,6 @@
         formatDate,
         formatPrice,
     } from "$lib/formatters";
-    import "./PortDashboard.css";
 
     type Holding = {
         symbol: string;
@@ -69,9 +68,7 @@
     let cashBalance = $state(cashProp);
     let lastRefreshed = $state(refreshedProp);
 
-    let snapshot = $derived.by(() =>
-        createSnapshot(holdings, cashBalance)
-    );
+    let snapshot = $derived.by(() => createSnapshot(holdings, cashBalance));
     let snapshotChange = $derived.by(() =>
         formatChangeDisplay(snapshot.dayChange, snapshot.dayPercent)
     );
@@ -100,10 +97,7 @@
         return calcPositionValue(holding) * (holding.dayPercent / 100);
     }
 
-    function createSnapshot(
-        list: Holding[],
-        cash: number
-    ): PortfolioSnapshot {
+    function createSnapshot(list: Holding[], cash: number): PortfolioSnapshot {
         const investedValue = list.reduce(
             (total, holding) => total + calcPositionValue(holding),
             0
@@ -197,3 +191,136 @@
         {/if}
     </div>
 </section>
+
+<style>
+    .portfolio-pane {
+        border: 1px solid var(--primary-dark);
+        border-radius: 0.75rem;
+        padding: 1.75rem;
+        box-sizing: border-box;
+        background-color: var(--primary-light);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .portfolio-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+    }
+
+    .timestamp {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--accent-dark);
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+
+    .summary-card {
+        border: 1px solid var(--accent-dark);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        background: var(--primary-light-2);
+    }
+
+    .label {
+        margin: 0;
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--accent-dark);
+    }
+
+    .value {
+        margin: 0.25rem 0;
+        font-size: 1.5rem;
+    }
+
+    .change {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .positions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .positions-table {
+        border: 1px solid var(--primary-dark);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        table-layout: fixed;
+    }
+
+    thead {
+        background-color: var(--primary-light-2);
+    }
+
+    th,
+    td {
+        padding: 0.65rem 0.35rem;
+        text-align: left;
+        border-bottom: 1px solid var(--primary-dark);
+        overflow-wrap: anywhere;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .symbol-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .symbol {
+        font-weight: bold;
+    }
+
+    .company {
+        font-size: 0.8rem;
+        color: var(--accent-dark);
+    }
+
+    .ghost-button {
+        border: 1px solid var(--primary-dark);
+        background: transparent;
+        color: var(--primary-dark);
+        border-radius: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .empty-state {
+        margin: 0;
+        padding: 1rem;
+        text-align: center;
+        color: var(--accent-dark);
+    }
+
+    @media (max-width: 960px) {
+        .portfolio-heading {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
