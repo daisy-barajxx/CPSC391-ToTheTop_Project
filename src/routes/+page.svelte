@@ -1,134 +1,18 @@
 <script lang="ts">
     import type { SearchResult } from "$lib";
     import { resolve } from "$app/paths";
-    import {
-        formatChangeDisplay,
-        formatCurrency,
-        formatDate,
-        formatPrice,
-    } from "$lib/formatters";
+    import PortDashboard from "$lib/components/PortDashboard.svelte";
 
     /** Time (ms) to delay search requests. */
     const DEBOUNCE_DELAY = 200;
     /** Num characters to trigger search.*/
     const DEBOUNCE_CHARS = 3;
 
-    type Holding = {
-        symbol: string;
-        name: string;
-        shares: number;
-        price: number;
-        dayPercent: number;
-    };
-
-    type PortfolioSnapshot = {
-        investedValue: number;
-        totalValue: number;
-        dayChange: number;
-        dayPercent: number;
-    };
-
-    type HoldingWithMetrics = Holding & {
-        marketValue: number;
-        dayChangeValue: number;
-        changeDisplay: { text: string; color: string };
-    };
-
     let searchTerm = $state("");
     let charCount = $state(0);
     let results: SearchResult[] | undefined = $state(undefined);
     let errorMessage = $state("");
-
-    // placeholder values before real data
-    let holdings = $state<Holding[]>([
-        {
-            symbol: "AAPL",
-            name: "Apple Inc.",
-            shares: 1,
-            price: 9999,
-            dayPercent: 0.25,
-        },
-        {
-            symbol: "NVDA",
-            name: "NVIDIA Corp.",
-            shares: 1,
-            price: 8888,
-            dayPercent: -0.32,
-        },
-        {
-            symbol: "MSFT",
-            name: "Microsoft Corp.",
-            shares: 1,
-            price: 7777,
-            dayPercent: 0.18,
-        },
-        {
-            symbol: "TSLA",
-            name: "Tesla, Inc.",
-            shares: 1,
-            price: 6666,
-            dayPercent: -0.44,
-        },
-    ]);
-    let cashBalance = $state(1234);
-    let lastRefreshed = $state(new Date());
-
-    let snapshot = $derived.by(() =>
-        createSnapshot(holdings, cashBalance)
-    );
-    let snapshotChange = $derived.by(() =>
-        formatChangeDisplay(snapshot.dayChange, snapshot.dayPercent)
-    );
-    let holdingsWithMetrics = $derived.by(() =>
-        holdings.map((holding) => {
-            const marketValue = calcPositionValue(holding);
-            const dayChangeValue = calcPositionDayChange(holding);
-
-            return {
-                ...holding,
-                marketValue,
-                dayChangeValue,
-                changeDisplay: formatChangeDisplay(
-                    dayChangeValue,
-                    holding.dayPercent
-                ),
-            };
-        })
-    );
-
     let debounceId: NodeJS.Timeout | null = null;
-
-    function calcPositionValue(holding: Holding): number {
-        return holding.price * holding.shares;
-    }
-
-    function calcPositionDayChange(holding: Holding): number {
-        return calcPositionValue(holding) * (holding.dayPercent / 100);
-    }
-
-    function createSnapshot(
-        list: Holding[],
-        cash: number
-    ): PortfolioSnapshot {
-        const investedValue = list.reduce(
-            (total, holding) => total + calcPositionValue(holding),
-            0
-        );
-        const dayChange = list.reduce(
-            (total, holding) => total + calcPositionDayChange(holding),
-            0
-        );
-
-        const dayPercent =
-            investedValue === 0 ? 0 : (dayChange / investedValue) * 100;
-
-        return {
-            investedValue,
-            totalValue: investedValue + cash,
-            dayChange,
-            dayPercent,
-        };
-    }
 
     function onSearchInput() {
         const term = searchTerm.trim();
@@ -138,7 +22,6 @@
             clearTimeout(debounceId);
         }
 
-        // If the term is empty, reset state
         if (term.length === 0) {
             charCount = 0;
             results = undefined;
@@ -146,7 +29,6 @@
             return;
         }
 
-        // If we've typed enough characters, search immediately
         if (charCount >= DEBOUNCE_CHARS && term.length > 0) {
             charCount = 0;
             search(term);
@@ -186,7 +68,7 @@
             <h2>Search stocks by name or symbol</h2>
             <p class="helper-text">
                 Start typing to pull live matches. Keep an eye on your dashboard while
-                you research.
+                you search.
             </p>
         </header>
 
@@ -225,93 +107,19 @@
     </section>
 
     <div class="dashboard-row">
-        <aside class="pane portfolio-pane" aria-live="polite">
-            <div class="portfolio-heading">
-                <div>
-                    <p class="eyebrow">Portfolio</p>
-                    <h2>My dashboard</h2>
-                </div>
-                <p class="timestamp">Last updated {formatDate(lastRefreshed)}</p>
-            </div>
-
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <p class="label">Total value</p>
-                    <p class="value">{formatCurrency(snapshot.totalValue)}</p>
-                    <p class="change" style="color:{snapshotChange.color}">
-                        {snapshotChange.text}
-                    </p>
-                </div>
-                <div class="summary-card">
-                    <p class="label">Invested</p>
-                    <p class="value">{formatCurrency(snapshot.investedValue)}</p>
-                    <p class="helper-text">
-                        Cash on hand: {formatCurrency(cashBalance)}
-                    </p>
-                </div>
-            </div>
-
-            <div class="positions-header">
-                <h3>Positions</h3>
-                <!-- disabled for now; replace later -->
-                <button type="button" class="ghost-button" aria-disabled="true">
-                    Manage
-                </button>
-            </div>
-
-            <div class="positions-table" role="region">
-                {#if holdingsWithMetrics.length === 0}
-                    <p class="empty-state">
-                        You have no holdings yet. Search for a stock to add it once the
-                        backend workflow is ready.
-                    </p>
-                {:else}
-                    <table>
-                        <thead>
-                            <tr>
-                                <th scope="col">Symbol</th>
-                                <th scope="col">Shares</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Value</th>
-                                <th scope="col">Day</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#each holdingsWithMetrics as holding (holding.symbol)}
-                                <tr>
-                                    <td>
-                                        <div class="symbol-cell">
-                                            <span class="symbol">{holding.symbol}</span>
-                                            <span class="company">{holding.name}</span>
-                                        </div>
-                                    </td>
-                                    <td>{holding.shares}</td>
-                                    <td>{formatPrice(holding.price)}</td>
-                                    <td>{formatCurrency(holding.marketValue)}</td>
-                                    <td style="color:{holding.changeDisplay.color}">
-                                        {holding.changeDisplay.text}
-                                    </td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </table>
-                {/if}
-            </div>
-        </aside>
+        <div class="dashboard-pane">
+            <PortDashboard />
+        </div>
     </div>
 </main>
 
 <style>
-    :global(:root) {
-        --nav-height: 4rem;
-    }
-
     main.home-layout {
         display: flex;
         flex-direction: column;
         gap: 2rem;
         padding: 2rem clamp(1rem, 4vw, 3rem) 3rem;
-        width: min(1200px, 100%);
+        width: min(1320px, 100%);
         margin: 0 auto 4rem;
         box-sizing: border-box;
     }
@@ -325,54 +133,51 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        overflow: visible;
+    }
+
+    .search-pane {
+        align-items: center;
+    }
+
+    .search-pane > * {
+        width: 100%;
+        max-width: 720px;
     }
 
     .dashboard-row {
-        width: 100%;
         display: flex;
         justify-content: flex-end;
+        width: 100%;
     }
 
-    .portfolio-pane {
+    .dashboard-pane {
         width: min(520px, 100%);
-        align-self: flex-start;
     }
 
-    .pane-header h2,
-    .portfolio-heading h2 {
+    .pane-header h2 {
         margin: 0.25rem 0 0;
-    }
-
-    .eyebrow {
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        font-size: 0.75rem;
-        margin: 0;
-        color: var(--accent-dark);
     }
 
     .helper-text {
         margin: 0;
         font-size: 0.9rem;
         color: var(--accent-dark);
+        max-width: 48ch;
     }
 
     #search-input {
         padding: 1rem;
         font-size: 1.1rem;
-        width: min(720px, 100%);
+        width: 100%;
         border: 1px solid var(--primary-dark);
         border-radius: 0.5rem;
         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.08);
-        align-self: flex-start;
     }
 
     #search-results-outer {
-        width: min(720px, 100%);
+        width: 100%;
         font-family: monospace;
         font-size: 1rem;
-        align-self: flex-start;
     }
 
     #search-results {
@@ -410,129 +215,15 @@
         text-align: center;
     }
 
-    .portfolio-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 1rem;
-    }
-
-    .timestamp {
-        margin: 0;
-        font-size: 0.85rem;
-        color: var(--accent-dark);
-    }
-
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-    }
-
-    .summary-card {
-        border: 1px solid rgba(17, 21, 28, 0.1);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        background: var(--primary-light-2);
-    }
-
-    .label {
-        margin: 0;
-        font-size: 0.85rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--accent-dark);
-    }
-
-    .value {
-        margin: 0.25rem 0;
-        font-size: 1.5rem;
-    }
-
-    .change {
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
-    .positions-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .positions-table {
-        border: 1px solid rgba(17, 21, 28, 0.1);
-        border-radius: 0.75rem;
-        overflow: hidden;
-        background: #fff;
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-    }
-
-    thead {
-        background-color: var(--primary-light-2);
-    }
-
-    th,
-    td {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        border-bottom: 1px solid rgba(17, 21, 28, 0.1);
-    }
-
-    tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .symbol-cell {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .symbol {
-        font-weight: bold;
-    }
-
-    .company {
-        font-size: 0.8rem;
-        color: var(--accent-dark);
-    }
-
-    .ghost-button { /* change later */
-        border: 1px solid var(--primary-dark);
-        background: transparent;
-        color: var(--primary-dark);
-        border-radius: 0.5rem;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.85rem;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
-    .empty-state {
-        margin: 0;
-        padding: 1rem;
-        text-align: center;
-        color: var(--accent-dark);
-    }
-
-    @media (max-width: 960px) {
-        #search-input,
-        #search-results-outer {
-            width: 100%;
-        }
-
+    @media (max-width: 1050px) {
         .dashboard-row {
             justify-content: center;
         }
+    }
 
-        .portfolio-pane {
-            width: 100%;
+    @media (max-width: 720px) {
+        .search-pane > * {
+            max-width: 100%;
         }
     }
 </style>
