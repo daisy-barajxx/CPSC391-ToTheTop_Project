@@ -1,29 +1,41 @@
-import { authorizeUserAction } from "$lib/server/auth";
-import { addToWatchlist, removeFromWatchlist } from "$lib/server/watchlists";
+import { SESSION_COOKIE_NAME, validateSessionToken } from "$lib/server/auth";
+import {
+    addToWatchlist,
+    isInWatchlist,
+    removeFromWatchlist,
+} from "$lib/server/watchlists";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ cookies, url, params }) => {
-    const userId = url.searchParams.get("userId");
-
-    if (!userId) {
-        throw error(400, "User ID is required.");
-    }
-
+export const GET: RequestHandler = async ({ cookies, params }) => {
     if (!params.symbol) {
         throw error(400, "Stock symbol is required.");
     }
 
-    const authorized = await authorizeUserAction(cookies, userId);
+    const token = cookies.get(SESSION_COOKIE_NAME);
+    const session = await validateSessionToken(token ?? "");
 
-    if (authorized == null) {
+    if (!session) {
         throw error(401, "Unauthenticated");
     }
 
-    if (!authorized) {
-        throw error(403, "Unauthorized");
+    const result = await isInWatchlist(session.userId, params.symbol);
+
+    return json(result);
+};
+
+export const POST: RequestHandler = async ({ cookies, params }) => {
+    if (!params.symbol) {
+        throw error(400, "Stock symbol is required.");
     }
 
-    const result = await addToWatchlist(userId, params.symbol);
+    const token = cookies.get(SESSION_COOKIE_NAME);
+    const session = await validateSessionToken(token ?? "");
+
+    if (!session) {
+        throw error(401, "Unauthenticated");
+    }
+
+    const result = await addToWatchlist(session.userId, params.symbol);
 
     if (result == null) {
         throw error(400, "Stock already in watchlist.");
@@ -32,26 +44,17 @@ export const POST: RequestHandler = async ({ cookies, url, params }) => {
     return json(result);
 };
 
-export const DELETE: RequestHandler = async ({ cookies, url, params }) => {
-    const userId = url.searchParams.get("userId");
-
+export const DELETE: RequestHandler = async ({ cookies, params }) => {
     if (!params.symbol) {
         throw error(400, "Stock symbol is required.");
     }
 
-    if (!userId) {
-        throw error(400, "User ID is required.");
-    }
+    const token = cookies.get(SESSION_COOKIE_NAME);
+    const session = await validateSessionToken(token ?? "");
 
-    const authorized = await authorizeUserAction(cookies, userId);
-
-    if (authorized == null) {
+    if (!session) {
         throw error(401, "Unauthenticated");
     }
 
-    if (!authorized) {
-        throw error(403, "Unauthorized");
-    }
-
-    return json(await removeFromWatchlist(userId, params.symbol));
+    return json(await removeFromWatchlist(session.userId, params.symbol));
 };

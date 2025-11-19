@@ -17,6 +17,20 @@ export async function getWatchlist(userId: string): Promise<WatchlistItem[]> {
     });
 }
 
+export async function isInWatchlist(
+    userId: string,
+    stock: string
+): Promise<boolean> {
+    if (!userId || !stock) {
+        throw new Error("User ID and stock symbol are required.");
+    }
+
+    const res =
+        await db`SELECT COUNT(*) FROM watchlists WHERE user_id = ${userId} AND stock = ${stock}`;
+
+    return res[0].count == 1;
+}
+
 export async function addToWatchlist(
     userId: string,
     stock: string
