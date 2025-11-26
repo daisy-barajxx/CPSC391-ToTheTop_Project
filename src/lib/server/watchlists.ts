@@ -46,8 +46,10 @@ export async function isInWatchlist(
         throw new Error("User ID and stock symbol are required.");
     }
 
+    const normalizedStock = stock.toUpperCase();
+
     const res =
-        await db`SELECT COUNT(*) FROM watchlists WHERE user_id = ${userId} AND stock = ${stock}`;
+        await db`SELECT COUNT(*) FROM watchlists WHERE user_id = ${userId} AND stock = ${normalizedStock}`;
 
     return res[0].count == 1;
 }
@@ -75,9 +77,11 @@ export async function addToWatchlist(
         throw new Error("Stock symbol is required.");
     }
 
+    const normalizedStock = stock.toUpperCase();
+
     try {
         const res =
-            await db`INSERT INTO watchlists (user_id, stock) VALUES (${userId}, ${stock}) RETURNING *`;
+            await db`INSERT INTO watchlists (user_id, stock) VALUES (${userId}, ${normalizedStock}) RETURNING *`;
 
         return {
             stock: res[0].stock,
@@ -89,7 +93,8 @@ export async function addToWatchlist(
             return null;
         }
 
-        throw e;
+        console.error("Error adding to watchlist:", e);
+        throw new Error("Failed to add stock to watchlist.");
     }
 }
 
@@ -115,5 +120,13 @@ export async function removeFromWatchlist(
         throw new Error("Stock symbol is required.");
     }
 
-    await db`DELETE FROM watchlists WHERE user_id = ${userId} AND stock = ${stock}`;
+    const normalizedStock = stock.toUpperCase();
+
+   try {
+        await db`DELETE FROM watchlists WHERE user_id = ${userId} AND stock = ${normalizedStock}`;
+    } catch (e) {
+        
+        console.error("Error removing from watchlist:", e);
+        throw new Error("Failed to remove stock from watchlist.");
+    }
 }
