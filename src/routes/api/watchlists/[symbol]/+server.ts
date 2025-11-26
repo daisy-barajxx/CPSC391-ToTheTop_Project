@@ -56,5 +56,7 @@ export const DELETE: RequestHandler = async ({ cookies, params }) => {
         throw error(401, "Unauthenticated");
     }
 
-    return json(await removeFromWatchlist(session.userId, params.symbol));
+    await removeFromWatchlist(session.userId, params.symbol);
+    
+    return json({success: true});
 };
