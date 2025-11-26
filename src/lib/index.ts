@@ -59,3 +59,13 @@ export interface StockOHLC {
      */
     ohlc: [Date, number, number, number, number][];
 }
+
+/**
+ * Represents a single entry in a user's stock watchlist.
+ */
+export interface WatchlistItem {
+    /** User ID who owns this watchlist item. */
+    userId: string;
+    /** Stock symbol. */
+    stock: string;
+}
