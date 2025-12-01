@@ -2,6 +2,7 @@
     import type { SearchResult } from "$lib";
     import { resolve } from "$app/paths";
     import PortDashboard from "$lib/components/PortDashboard.svelte";
+    import Watchlist from "$lib/components/watchlist.svelte";
 
     /** Time (ms) to delay search requests. */
     const DEBOUNCE_DELAY = 200;
@@ -72,6 +73,8 @@
             </p>
         </header>
 
+<div class="page-container">
+    <div class="search-section">
         <input
             id="search-input"
             placeholder="Search stocks by name or symbol..."
@@ -91,9 +94,9 @@
                         {#each results as stock (stock.symbol)}
                             <li>
                                 <a href={resolve(`/stocks/${stock.symbol}`)}>
-                                    <div class="result-row">
-                                        <span>{stock.name}</span>
-                                        <span>({stock.symbol})</span>
+                                    <div class="search-result-item">
+                                        <span class="result-name">{stock.name}</span>
+                                        <span class="result-symbol">({stock.symbol})</span>
                                     </div>
                                 </a>
                             </li>
@@ -130,6 +133,22 @@
         padding: 1.75rem;
         box-sizing: border-box;
         background-color: var(--primary-light);
+    </div>
+
+    <aside class="watchlist-sidebar">
+        <Watchlist />
+    </aside>
+</div>
+
+<style>
+
+    .page-container {
+        padding: 2rem;
+        min-height: calc(100vh - 5rem);
+        position: relative;
+    }
+
+    .search-section {
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -137,6 +156,9 @@
 
     .search-pane {
         align-items: center;
+        width: 100%;
+        margin-bottom: 3rem;
+        min-height: 160px;
     }
 
     .search-pane > * {
@@ -166,18 +188,27 @@
     }
 
     #search-input {
-        padding: 1rem;
-        font-size: 1.1rem;
-        width: 100%;
+        padding: 1rem 0.25rem;
+        font-size: large;
+        width: 70%;
+        max-width: 900px;
         border: 1px solid var(--primary-dark);
         border-radius: 0.5rem;
         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.08);
     }
 
+    #search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
     #search-results-outer {
-        width: 100%;
-        font-family: monospace;
-        font-size: 1rem;
+        width: 70%;
+        max-width: 900px;
+        margin-top: 1rem;
+        position: relative;
+        z-index: 100;
     }
 
     #search-results {
@@ -186,7 +217,14 @@
         margin: 0.5rem 0 0;
         padding: 0.5rem;
         border: 1px solid var(--primary-dark);
-        border-radius: 0.5rem;
+        border-radius: 0.5em;
+        background-color: white;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        position: absolute;
+        width: 100%;
+        font-family: monospace;
+        font-size: x-large;
     }
 
     #search-results a {
@@ -194,18 +232,27 @@
         color: inherit;
     }
 
-    .result-row {
+    .search-result-item {
         display: flex;
         justify-content: space-between;
-        padding: 0.75rem 0.5rem;
-        transition: background-color 0.1s ease-in-out;
+        align-items: center;
+        padding: 1rem 0;
     }
 
-    #search-results a:hover .result-row {
+    #search-results a:hover .search-result-item {
         background-color: var(--primary-light-2);
     }
 
-    #search-results li:not(:last-child) {
+    .result-name {
+        font-size: inherit;
+    }
+
+    .result-symbol {
+        font-family: monospace;
+        font-size: inherit;
+    }
+
+    #search-results li:not(:last-child) .search-result-item {
         border-bottom: 1px solid var(--primary-dark);
     }
 
@@ -213,6 +260,34 @@
     #search-error {
         padding: 1rem;
         text-align: center;
+        background-color: white;
+        border: 1px solid var(--primary-dark);
+        border-radius: 0.5em;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .watchlist-sidebar {
+        max-width: 450px;
+        position: relative;
+    }
+
+    @media (max-width: 1024px) {
+        .page-container {
+            padding: 1rem;
+        }
+
+        .search-section {
+            margin-bottom: 2rem;
+        }
+
+        #search-input,
+        #search-results-outer {
+            width: 95%;
+        }
+
+        .watchlist-sidebar {
+            max-width: 100%;
+        }
     }
 
     @media (max-width: 1050px) {

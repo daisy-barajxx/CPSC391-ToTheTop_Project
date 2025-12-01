@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
     import { formatPrice, formatChangeDisplay } from "$lib/formatters";
+    import WatchlistButton from "$lib/components/watchlistButton.svelte";
     import * as Plot from "@observablehq/plot";
     import { TimeRange } from "$lib";
 
@@ -99,11 +100,14 @@
 </script>
 
 <main>
-    <!-- Symbol + name -->
-    <div id="symbol-row">
-        <span id="symbol-box"><b>{symbol}</b></span>
-        <span id="stock-name">{name}</span>
-    </div>
+    <!-- Symbol + name + watchlist button-->
+     <div id = "header-row">
+        <div id="symbol-row">
+            <span id="symbol-box"><b>{symbol}</b></span>
+            <span id="stock-name">{name}</span>
+        </div>
+            <WatchlistButton {symbol} />
+        </div>
 
     <div id="outer">
         <div id="price-info">
@@ -152,6 +156,12 @@
         margin: 2rem 1rem;
     }
 
+    #header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
     #outer {
         display: grid;
         grid-template-columns: 2fr 1fr;
@@ -177,7 +187,6 @@
         margin: 1rem 0;
         font-size: 1.5rem;
     }
-
     .currency {
         color: var(--accent-dark);
         font-size: 1rem;
@@ -188,7 +197,6 @@
     }
 
     #graph-outer > button {
-        transition: all 0.1s ease-in-out;
         padding: 0.25rem 0.5rem;
         margin-right: 0.5rem;
         background-color: var(--primary-light);
@@ -199,7 +207,6 @@
     }
 
     #graph-outer > button:hover {
-        transition: all 0.1s ease-in-out;
         color: var(--accent-primary);
         border: 2px solid var(--accent-primary);
         border-radius: 0rem;

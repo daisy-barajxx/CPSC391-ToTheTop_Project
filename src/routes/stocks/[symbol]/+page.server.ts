@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { TimeRange } from "$lib";
 import { getStockHistory } from "$lib/server/polygon";
