@@ -68,48 +68,61 @@
             <p class="eyebrow">Market lookup</p>
             <h2>Search stocks by name or symbol</h2>
             <p class="helper-text">
-                Start typing to pull live matches. Keep an eye on your dashboard while
-                you search.
+                Start typing to pull live matches. Keep an eye on your dashboard
+                while you search.
             </p>
         </header>
 
-<div class="page-container">
-    <div class="search-section">
-        <input
-            id="search-input"
-            placeholder="Search stocks by name or symbol..."
-            type="text"
-            aria-label="Search stocks"
-            bind:value={searchTerm}
-            oninput={onSearchInput}
-            autocomplete="off"
-        />
+        <div class="page-container">
+            <div class="search-section">
+                <input
+                    id="search-input"
+                    placeholder="Search stocks by name or symbol..."
+                    type="text"
+                    aria-label="Search stocks"
+                    bind:value={searchTerm}
+                    oninput={onSearchInput}
+                    autocomplete="off"
+                />
 
-        {#if searchTerm}
-            <div id="search-results-outer">
-                {#if errorMessage}
-                    <p id="search-error">{errorMessage}</p>
-                {:else if results && results.length > 0}
-                    <ul id="search-results">
-                        {#each results as stock (stock.symbol)}
-                            <li>
-                                <a href={resolve(`/stocks/${stock.symbol}`)}>
-                                    <div class="search-result-item">
-                                        <span class="result-name">{stock.name}</span>
-                                        <span class="result-symbol">({stock.symbol})</span>
-                                    </div>
-                                </a>
-                            </li>
-                        {/each}
-                    </ul>
-                {:else if results && results.length === 0}
-                    <p id="search-no-results">No results found.</p>
+                {#if searchTerm}
+                    <div id="search-results-outer">
+                        {#if errorMessage}
+                            <p id="search-error">{errorMessage}</p>
+                        {:else if results && results.length > 0}
+                            <ul id="search-results">
+                                {#each results as stock (stock.symbol)}
+                                    <li>
+                                        <a
+                                            href={resolve(
+                                                `/stocks/${stock.symbol}`
+                                            )}
+                                        >
+                                            <div class="search-result-item">
+                                                <span class="result-name"
+                                                    >{stock.name}</span
+                                                >
+                                                <span class="result-symbol"
+                                                    >({stock.symbol})</span
+                                                >
+                                            </div>
+                                        </a>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {:else if results && results.length === 0}
+                            <p id="search-no-results">No results found.</p>
+                        {/if}
+                    </div>
                 {/if}
             </div>
-        {/if}
+        </div>
     </section>
 
     <div class="dashboard-row">
+        <aside class="watchlist-sidebar">
+            <Watchlist />
+        </aside>
         <div class="dashboard-pane">
             <PortDashboard />
         </div>
@@ -133,18 +146,10 @@
         padding: 1.75rem;
         box-sizing: border-box;
         background-color: var(--primary-light);
-    </div>
-
-    <aside class="watchlist-sidebar">
-        <Watchlist />
-    </aside>
-</div>
-
-<style>
+    }
 
     .page-container {
         padding: 2rem;
-        min-height: calc(100vh - 5rem);
         position: relative;
     }
 
@@ -163,12 +168,11 @@
 
     .search-pane > * {
         width: 100%;
-        max-width: 720px;
     }
 
     .dashboard-row {
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-evenly;
         width: 100%;
     }
 
@@ -191,7 +195,6 @@
         padding: 1rem 0.25rem;
         font-size: large;
         width: 70%;
-        max-width: 900px;
         border: 1px solid var(--primary-dark);
         border-radius: 0.5rem;
         box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.08);
@@ -206,7 +209,6 @@
     #search-results-outer {
         width: 70%;
         max-width: 900px;
-        margin-top: 1rem;
         position: relative;
         z-index: 100;
     }
